@@ -159,7 +159,7 @@ class Enemy:
         if math.degrees(diff) > FOV_ANGLE:
             return False
         # LOS wall check
-        return phys.has_line_of_sight((self.x, self.y), (player.x, player.y))
+        return phys.has_los((self.x, self.y), (player.x, player.y))
 
     # ── Render ────────────────────────────────────────────────────────────────
     def render(self, surface: pygame.Surface, cam_x: float, cam_y: float):
