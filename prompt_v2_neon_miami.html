@@ -1,0 +1,263 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700&display=swap');
+
+  .wrap { font-family: 'Barlow Condensed', sans-serif; color: var(--color-text-primary); padding: 1.5rem 0; }
+
+  .hdr { margin-bottom: 1.25rem; }
+  .hdr-sub { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: #00ffe5; letter-spacing: .2em; text-transform: uppercase; margin: 0 0 4px; }
+  .hdr-title { font-size: 22px; font-weight: 700; margin: 0; }
+
+  .pill-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1.25rem; }
+  .pill { font-family: 'Share Tech Mono', monospace; font-size: 11px; padding: 3px 10px; border-radius: 20px; border: 0.5px solid; }
+  .p-cyan   { color:#00ffe5; border-color:#00ffe5; background:rgba(0,255,229,.07); }
+  .p-pink   { color:#ff2a6d; border-color:#ff2a6d; background:rgba(255,42,109,.07); }
+  .p-amber  { color:#ff9f1c; border-color:#ff9f1c; background:rgba(255,159,28,.07); }
+  .p-green  { color:#39ff5a; border-color:#39ff5a; background:rgba(57,255,90,.07); }
+
+  .card { background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; margin-bottom: .875rem; }
+
+  .card-lbl { font-family: 'Share Tech Mono', monospace; font-size: 10px; letter-spacing: .2em; text-transform: uppercase; margin: 0 0 .6rem; display: flex; align-items: center; gap: 8px; }
+  .card-lbl::after { content:''; flex:1; height:.5px; background:var(--color-border-tertiary); }
+
+  .lbl-cyan   { color:#00ffe5; }
+  .lbl-pink   { color:#ff2a6d; }
+  .lbl-amber  { color:#ff9f1c; }
+  .lbl-green  { color:#39ff5a; }
+
+  .mono { font-family: 'Share Tech Mono', monospace; font-size: 12.5px; line-height: 1.85; white-space: pre-wrap; word-break: break-word; }
+
+  .kw  { color: #00ffe5; }
+  .val { color: #ff9f1c; }
+  .cm  { color: var(--color-text-secondary); }
+  .hl  { color: #39ff5a; }
+
+  .diff-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: .875rem; }
+  .diff-card { background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: .75rem 1rem; }
+  .diff-card-title { font-size: 12px; font-weight: 600; margin: 0 0 6px; text-transform: uppercase; letter-spacing: .08em; }
+  .diff-card-body { font-family: 'Share Tech Mono', monospace; font-size: 11.5px; line-height: 1.7; color: var(--color-text-secondary); }
+
+  .copy-btn { display:inline-flex; align-items:center; gap:6px; margin-top:1rem; font-family:'Share Tech Mono',monospace; font-size:12px; padding:6px 16px; border:.5px solid var(--color-border-secondary); border-radius:var(--border-radius-md); background:transparent; color:var(--color-text-secondary); cursor:pointer; transition:background .15s,color .15s; }
+  .copy-btn:hover { background:var(--color-background-primary); color:var(--color-text-primary); }
+  .copy-btn.ok { color:#00ffe5; border-color:#00ffe5; }
+</style>
+
+<div class="wrap">
+  <h2 class="sr-only">Prompt v2 — Neon Miami amélioré avec inertie, caméra rapprochée et maps de maison</h2>
+
+  <div class="hdr">
+    <p class="hdr-sub">// prompt v2 — patch mouvement + caméra + maps</p>
+    <p class="hdr-title">Neon Miami — Version Raffinée</p>
+  </div>
+
+  <div class="pill-row">
+    <span class="pill p-green">inertie joueur</span>
+    <span class="pill p-cyan">caméra x0.55</span>
+    <span class="pill p-pink">murs fins 8–12px</span>
+    <span class="pill p-amber">plan de maison</span>
+    <span class="pill p-cyan">pygame + pymunk</span>
+    <span class="pill p-pink">one-hit kill</span>
+  </div>
+
+  <div class="diff-row">
+    <div class="diff-card">
+      <div class="diff-card-title" style="color:#ff2a6d;">❌ version 1</div>
+      <div class="diff-card-body">Stop = arrêt net
+Zoom trop large
+Murs 32px épais
+Map abstraite</div>
+    </div>
+    <div class="diff-card">
+      <div class="diff-card-title" style="color:#39ff5a;">✓ version 2</div>
+      <div class="diff-card-body">Stop = glisse 180ms
+Zoom 55% du v1
+Murs 8–12px fins
+Plan appartement</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-lbl lbl-green">01 — mouvement avec inertie</div>
+    <div class="mono" id="block1"><span class="cm">## MOUVEMENT JOUEUR — inertie réaliste</span>
+
+Le joueur <span class="kw">ne s'arrête pas immédiatement</span>. Implémente
+une inertie par interpolation de vélocité :
+
+<span class="cm"># Dans player.py — update de la vitesse</span>
+<span class="val">ACCEL   = 1400</span>  <span class="cm"># px/s² — accélération au sol</span>
+<span class="val">FRICTION = 8.0</span>  <span class="cm"># facteur lerp quand aucune touche</span>
+<span class="val">MAX_SPD  = 190</span>  <span class="cm"># px/s vitesse max</span>
+
+<span class="kw">Si touche pressée</span> → accélère vers la direction
+  vx += dir_x * ACCEL * dt
+  vy += dir_y * ACCEL * dt
+  clamp(|v| ≤ MAX_SPD)
+
+<span class="kw">Si aucune touche</span> → freinage doux (lerp vers 0)
+  vx = lerp(vx, 0, FRICTION * dt)
+  vy = lerp(vy, 0, FRICTION * dt)
+
+Résultat : ~<span class="hl">150–200ms</span> de glisse à l'arrêt.
+Le dash annule l'inertie et applique
+une impulsion directe de <span class="val">480 px/s</span>.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-lbl lbl-cyan">02 — caméra rapprochée avec lag doux</div>
+    <div class="mono" id="block2"><span class="cm">## CAMÉRA — zoom tactique serré</span>
+
+<span class="kw">Zone visible</span> : <span class="val">480 × 270</span> px (moitié de 960×540)
+→ rendue puis upscalée ×2 sur l'écran final.
+Ou : viewport interne = <span class="val">540 × 304</span> (ratio 16:9, ×1.77).
+
+<span class="cm"># La caméra suit le joueur avec lag :</span>
+<span class="val">CAM_SMOOTH = 6.0</span>   <span class="cm"># lerp factor</span>
+target_cx = player.x - VIEW_W/2
+target_cy = player.y - VIEW_H/2
+cam_x = lerp(cam_x, target_cx, CAM_SMOOTH * dt)
+cam_y = lerp(cam_y, target_cy, CAM_SMOOTH * dt)
+
+<span class="cm"># Option avancée : décaler vers la visée</span>
+look_x = (mouse_x - VIEW_W/2) * 0.25
+look_y = (mouse_y - VIEW_H/2) * 0.25
+cam_x += look_x   <span class="cm"># anticipe la direction du tir</span>
+
+Clamp : ne pas sortir des bords du niveau.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-lbl lbl-pink">03 — map style appartement (plan de maison)</div>
+    <div class="mono" id="block3"><span class="cm">## LEVEL DESIGN — appartement cyberpunk</span>
+
+<span class="kw">Tile size</span> = <span class="val">16px</span> (au lieu de 32px)
+<span class="kw">Épaisseur des murs</span> = <span class="val">1 tile (16px)</span> sauf murs
+  porteurs = 2 tiles.
+<span class="kw">Taille du niveau</span> : environ <span class="val">60 × 38 tiles</span>
+  (960 × 608 px en mémoire).
+
+<span class="kw">Pièces obligatoires (plan d'appartement)</span> :
+  - Entrée / couloir central (2–3 tiles large)
+  - Salon                 (grande pièce ouverte)
+  - Cuisine               (L-shape avec îlot)
+  - 2 chambres            (petites, portes étroites)
+  - Salle de bain         (1×2 tiles, cul-de-sac)
+  - Bureau / salle serveur (ambiance cyberpunk)
+  - Terrasse / balcon     (ouverture sur extérieur)
+
+<span class="kw">Portes</span> = gap d'1 tile dans les murs (sans sprite).
+<span class="kw">Couloirs</span> = exactement <span class="val">2–3 tiles de large</span> pour
+  forcer les confrontations à courte portée.
+
+<span class="cm">## RENDU DES MURS FINS</span>
+Mur = rect de 16px de large, couleur dark.
+Bord supérieur/gauche : ligne de 1px <span class="val">CYAN_DIM</span>
+  (effet de lumière néon sur l'arête du mur).
+Intérieur : légère texture de brique 4×4px.
+Sol : parquet bois foncé (lignes horizontales
+  tous les 8px en FLOOR_LINE_COLOR).
+
+<span class="cm">## DESTRUCTION</span>
+<span class="val">WALL_MAX_HP = 2</span> (murs fins → cassent en 2 tirs)
+Murs porteurs (2 tiles) : HP = 4, indestructibles
+  visuellement différents (couleur béton <span class="hl">#3a3040</span>).</div>
+  </div>
+
+  <div class="card">
+    <div class="card-lbl lbl-amber">04 — prompt complet à copier</div>
+    <div class="mono" id="full-prompt"><span class="cm">## CONTEXTE</span>
+Tu es expert Python/Pygame. Génère la version 2
+d'un jeu top-down cyberpunk style Hotline Miami.
+C'est une refonte de la v1 avec 3 améliorations
+majeures. Conserve la stack <span class="kw">pygame 2.x + pymunk 6.x</span>
+et l'architecture en modules séparés.
+
+<span class="cm">## STACK TECHNIQUE</span>
+<span class="val">main.py</span>  <span class="val">constants.py</span>  <span class="val">physics.py</span>
+<span class="val">map.py</span>   <span class="val">player.py</span>    <span class="val">enemy.py</span>  <span class="val">ui.py</span>
+
+<span class="cm">## AMÉLIORATION 1 — INERTIE JOUEUR</span>
+Remplace l'arrêt net par un freinage par lerp.
+Constantes : ACCEL=1400, FRICTION=8.0, MAX_SPD=190
+<span class="kw">Si touche ZQSD/WASD pressée</span> :
+  Accélère dans la direction (clamp à MAX_SPD).
+<span class="kw">Si aucune touche</span> :
+  vx = lerp(vx, 0, FRICTION * dt)
+  vy = lerp(vy, 0, FRICTION * dt)
+Dash : impulsion directe 480px/s, annule inertie,
+durée 0.12s, cooldown 0.8s, ESPACE.
+
+<span class="cm">## AMÉLIORATION 2 — CAMÉRA RAPPROCHÉE</span>
+Viewport interne : <span class="val">480 × 270 px</span> (rendu interne),
+upscalé ×2 sur l'écran 960×540 avec pygame.transform.scale.
+Suivi avec lag : cam = lerp(cam, target, 6.0 * dt).
+Offset visée : cam_x += (mouse_x - 240) * 0.25
+               cam_y += (mouse_y - 135) * 0.25
+(anticipe la direction du tir, donne de l'espace).
+
+<span class="cm">## AMÉLIORATION 3 — MAP STYLE APPARTEMENT</span>
+TILE_SIZE = 16px. Niveau : 60×38 tiles.
+Murs fins = 1 tile (16px). HP = 2 (cassent vite).
+Murs porteurs = 2 tiles, HP = 4, couleur béton.
+
+Plan de l'appartement (une seule grande map) :
+- Couloir central en L traversant toute la map
+- Salon (pièce ouverte ~8×6 tiles)
+- Cuisine en L avec plan de travail (obstacles)
+- 2 chambres (4×4 tiles, 1 seule porte chacune)
+- Salle de bain (2×3 tiles, cul-de-sac tactique)
+- Bureau / salle serveur (racks comme obstacles)
+- Balcon extérieur (1 côté ouvert, vue dégagée)
+Portes = gap 1 tile. Couloirs = 2–3 tiles de large.
+
+Sol : parquet (lignes horiz tous les 8px).
+Mur : bord gauche/haut = ligne CYAN_DIM 1px (néon).
+Mur porteur : texture béton, couleur #3a3040.
+
+<span class="cm">## ENNEMIS — 12 total répartis par pièce</span>
+Entrée : 1 gardien (pistol, patrouille couloir)
+Salon   : 2 ennemis (pistol + shotgun)
+Cuisine : 2 ennemis (embuscade derrière obstacle)
+Chambres: 1 par chambre (pistolet, alerte rapide)
+Bureau  : 2 ennemis (uzi, patrouille serrée)
+Couloir : 2 ennemis mobiles
+Balcon  : 1 sniper (portée longue, pistol)
+
+<span class="cm">## PHYSIQUE (inchangée)</span>
+Pymunk pour collisions. Ragdoll à la mort
+(torse + tête + 2 jambes, joints pivots).
+Balles = corps physiques. Murs détruits retirent
+leur shape du space. Débris = particules visuelles.
+WALL_MAX_HP=2 (murs fins), 4 (porteurs).
+
+<span class="cm">## GAMEPLAY (inchangé)</span>
+One-hit kill. Restart immédiat (R). Dash (ESPACE).
+Armes au sol à ramasser. 1=pistol 2=shotgun 3=uzi.
+Ennemis : 3 états patrol/alert/combat, cone vision.
+
+<span class="cm">## VISUELS CYBERPUNK</span>
+Palette : #0a0a0f fond, #00ffe5 cyan, #ff2a6d magenta.
+Scanlines overlay. Flash couleur à chaque mort.
+HUD monospace minimal. Screen shake sur kill.
+
+Génère le code complet fichier par fichier.</div>
+    <button class="copy-btn" id="cpBtn" onclick="doCopy()">
+      <i class="ti ti-copy" aria-hidden="true"></i>
+      Copier le prompt complet
+    </button>
+  </div>
+</div>
+
+<script>
+function doCopy() {
+  const text = document.getElementById('full-prompt').innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('cpBtn');
+    btn.classList.add('ok');
+    btn.innerHTML = '<i class="ti ti-check" aria-hidden="true"></i> Copié !';
+    setTimeout(() => {
+      btn.classList.remove('ok');
+      btn.innerHTML = '<i class="ti ti-copy" aria-hidden="true"></i> Copier le prompt complet';
+    }, 2200);
+  });
+}
+</script>
