@@ -128,10 +128,9 @@ class Game:
         if ev.type != pygame.KEYDOWN: return
         if ev.key in (pygame.K_UP, pygame.K_DOWN):
             self._title_btn = 1 - self._title_btn
-            return
-        if ev.key == pygame.K_e and self._title_btn == 1:
-            self._launch_editor(); return
-        if ev.key == pygame.K_RETURN:
+        elif ev.key == pygame.K_e:
+            self._launch_editor()                  # E = éditeur toujours
+        elif ev.key == pygame.K_RETURN:
             if self._title_btn == 1:
                 self._launch_editor()
             else:
@@ -145,7 +144,11 @@ class Game:
 
     def _ev_editor(self, ev):
         if self._editor is None: return
-        result = self._editor.handle_event(ev)
+        try:
+            result = self._editor.handle_event(ev)
+        except Exception:
+            import traceback; traceback.print_exc()
+            result = None
         if result == 'quit':
             self._editor = None
             self._goto(GS_TITLE)
