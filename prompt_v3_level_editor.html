@@ -1,0 +1,299 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700&display=swap');
+  .w{font-family:'Barlow Condensed',sans-serif;color:var(--color-text-primary);padding:1.5rem 0}
+  .hdr-sub{font-family:'Share Tech Mono',monospace;font-size:11px;color:#00ffe5;letter-spacing:.2em;text-transform:uppercase;margin:0 0 4px}
+  .hdr-title{font-size:22px;font-weight:700;margin:0 0 1.25rem}
+  .pill-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem}
+  .pill{font-family:'Share Tech Mono',monospace;font-size:11px;padding:3px 10px;border-radius:20px;border:.5px solid}
+  .pc{color:#00ffe5;border-color:#00ffe5;background:rgba(0,255,229,.07)}
+  .pp{color:#ff2a6d;border-color:#ff2a6d;background:rgba(255,42,109,.07)}
+  .pa{color:#ff9f1c;border-color:#ff9f1c;background:rgba(255,159,28,.07)}
+  .pg{color:#39ff5a;border-color:#39ff5a;background:rgba(57,255,90,.07)}
+  .card{background:var(--color-background-secondary);border:.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:.875rem}
+  .lbl{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;margin:0 0 .6rem;display:flex;align-items:center;gap:8px}
+  .lbl::after{content:'';flex:1;height:.5px;background:var(--color-border-tertiary)}
+  .lc{color:#00ffe5}.lp{color:#ff2a6d}.la{color:#ff9f1c}.lg{color:#39ff5a}
+  .mono{font-family:'Share Tech Mono',monospace;font-size:12.5px;line-height:1.85;white-space:pre-wrap;word-break:break-word}
+  .kw{color:#00ffe5}.val{color:#ff9f1c}.cm{color:var(--color-text-secondary)}.hl{color:#39ff5a}.pk{color:#ff2a6d}
+  .tile-legend{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1rem}
+  .tile-item{display:flex;align-items:center;gap:8px;font-family:'Share Tech Mono',monospace;font-size:11px}
+  .tile-swatch{width:20px;height:20px;border-radius:3px;flex-shrink:0;border:.5px solid var(--color-border-tertiary)}
+  .copy-btn{display:inline-flex;align-items:center;gap:6px;margin-top:1rem;font-family:'Share Tech Mono',monospace;font-size:12px;padding:6px 16px;border:.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:transparent;color:var(--color-text-secondary);cursor:pointer;transition:background .15s,color .15s}
+  .copy-btn:hover{background:var(--color-background-primary);color:var(--color-text-primary)}
+  .copy-btn.ok{color:#00ffe5;border-color:#00ffe5}
+</style>
+
+<div class="w">
+  <h2 class="sr-only">Prompt v3 — Éditeur de niveau pour Neon Miami</h2>
+
+  <p class="hdr-sub">// prompt v3 — éditeur de niveau intégré</p>
+  <p class="hdr-title">Neon Miami — Level Editor</p>
+
+  <div class="pill-row">
+    <span class="pill pc">editor.py</span>
+    <span class="pill pc">format JSON</span>
+    <span class="pill pp">peinture de tiles</span>
+    <span class="pill pp">placement ennemis</span>
+    <span class="pill pa">undo/redo</span>
+    <span class="pill pa">fill bucket</span>
+    <span class="pill pg">export → jeu</span>
+    <span class="pill pg">F5 test immédiat</span>
+  </div>
+
+  <div class="card">
+    <div class="lbl lc">01 — tiles disponibles</div>
+    <div class="tile-legend">
+      <div class="tile-item"><div class="tile-swatch" style="background:#0a0a0f"></div><span class="cm">0 vide</span></div>
+      <div class="tile-item"><div class="tile-swatch" style="background:#1c1e34"></div><span class="cm">1 mur fin</span></div>
+      <div class="tile-item"><div class="tile-swatch" style="background:#3a3040"></div><span class="cm">2 porteur</span></div>
+      <div class="tile-item"><div class="tile-swatch" style="background:#14141a"></div><span class="cm">3 sol</span></div>
+      <div class="tile-item"><div class="tile-swatch" style="background:#00ffe5;opacity:.5"></div><span class="cm">P spawn joueur</span></div>
+      <div class="tile-item"><div class="tile-swatch" style="background:#ff2a6d;opacity:.6"></div><span class="cm">E ennemi</span></div>
+      <div class="tile-item"><div class="tile-swatch" style="background:#ff9f1c;opacity:.6"></div><span class="cm">W arme</span></div>
+      <div class="tile-item"><div class="tile-swatch" style="background:#39ff5a;opacity:.4"></div><span class="cm">X sortie</span></div>
+    </div>
+    <div class="mono"><span class="kw">TILE_TYPES</span> = {
+  <span class="val">0</span>: "floor",    <span class="val">1</span>: "wall_thin",
+  <span class="val">2</span>: "wall_solid", <span class="val">3</span>: "floor_parquet",
+}
+<span class="kw">ENTITY_TYPES</span> = {
+  <span class="val">"P"</span>: "player_spawn",  <span class="cm"># unique</span>
+  <span class="val">"E"</span>: "enemy",          <span class="cm"># répétable, propriétés</span>
+  <span class="val">"W"</span>: "weapon_pickup",  <span class="cm"># répétable, arme</span>
+  <span class="val">"X"</span>: "exit_trigger",   <span class="cm"># unique</span>
+}</div>
+  </div>
+
+  <div class="card">
+    <div class="lbl lp">02 — interface éditeur (editor.py)</div>
+    <div class="mono"><span class="cm">## LAYOUT DE L'ÉCRAN</span>
+┌─────────────────────────────┬──────────┐
+│                             │ PALETTE  │
+│   CANVAS (grille de tiles)  │ ──────── │
+│   960 × 500 px              │ Tile     │
+│   scroll souris = pan       │ courant  │
+│                             │ ──────── │
+│                             │ Outils   │
+├─────────────────────────────┤ ──────── │
+│ STATUSBAR: coords | tile    │ Ennemis  │
+└─────────────────────────────┴──────────┘
+
+<span class="cm">## OUTILS (touches clavier)</span>
+<span class="kw">[1–7]</span>    sélectionne le tile/entité actif
+<span class="kw">[B]</span>      brush (peinture maintien clic gauche)
+<span class="kw">[F]</span>      fill bucket (flood fill récursif)
+<span class="kw">[E]</span>      eraser → pose tile 0 (floor)
+<span class="kw">[R]</span>      rectangle : clic+drag → remplit zone
+<span class="kw">[L]</span>      ligne : clic+drag → trace ligne Bresenham
+<span class="kw">[Ctrl+Z]</span> undo  (pile de 50 états)
+<span class="kw">[Ctrl+Y]</span> redo
+<span class="kw">[Ctrl+S]</span> save → levels/current.json
+<span class="kw">[Ctrl+O]</span> open → file dialog (pygame)
+<span class="kw">[N]</span>      new level (demande W×H en tiles)
+<span class="kw">[F5]</span>     test : lance main.py avec ce niveau
+<span class="kw">[Tab]</span>    toggle : éditeur ↔ aperçu rendu final
+
+<span class="cm">## NAVIGATION CANVAS</span>
+Molette souris       → zoom (×0.5 à ×4)
+Clic molette + drag  → pan (déplacement vue)
+Clic droit           → efface tile (pose 0)
+Clic gauche          → pose tile actif
+Shift+clic           → pipette (prend le tile)</div>
+  </div>
+
+  <div class="card">
+    <div class="lbl la">03 — placement d'entités avec popup</div>
+    <div class="mono"><span class="cm">## ENTITÉS (couche séparée des tiles)</span>
+Quand l'outil <span class="kw">E (enemy)</span> est actif et qu'on clique :
+→ popup pygame (surface semi-transparente) :
+
+  <span class="pk">┌─ PLACE ENEMY ────────────────┐</span>
+  <span class="pk">│</span> Weapon  : [pistol ▾]         <span class="pk">│</span>
+  <span class="pk">│</span> Patrol  : [static/loop/rand] <span class="pk">│</span>
+  <span class="pk">│</span> Vision  : [normal/wide/none] <span class="pk">│</span>
+  <span class="pk">│</span>          [OK]  [Cancel]      <span class="pk">│</span>
+  <span class="pk">└──────────────────────────────┘</span>
+
+Résultat stocké en dict :
+<span class="val">{</span>
+  "type": "enemy",
+  "gx": 12, "gy": 5,
+  "weapon": "shotgun",
+  "patrol": "loop",
+  "vision": "wide"
+<span class="val">}</span>
+
+Même principe pour <span class="kw">W (weapon)</span> :
+→ choisir : pistol / shotgun / uzi / katana
+
+Les entités s'affichent sur le canvas comme
+des icônes colorées semi-transparentes par-dessus
+les tiles. Sélectionnable+supprimable avec <span class="kw">Del</span>.</div>
+  </div>
+
+  <div class="card">
+    <div class="lbl lg">04 — format de sauvegarde JSON</div>
+    <div class="mono"><span class="cm"># levels/mon_niveau.json</span>
+<span class="val">{</span>
+  "meta": <span class="val">{</span>
+    "name": "appartement_01",
+    "width": 60,
+    "height": 38,
+    "tile_size": 16,
+    "version": 2
+  <span class="val">}</span>,
+  "tiles": [           <span class="cm"># liste plate, row-major</span>
+    [0,1,1,1, ...],    <span class="cm"># row 0</span>
+    [1,0,0,0, ...],    <span class="cm"># row 1</span>
+    ...
+  ],
+  "entities": [
+    <span class="val">{</span>"type":"player_spawn","gx":2,"gy":2<span class="val">}</span>,
+    <span class="val">{</span>"type":"enemy","gx":12,"gy":5,
+      "weapon":"shotgun","patrol":"loop","vision":"wide"<span class="val">}</span>,
+    <span class="val">{</span>"type":"weapon_pickup","gx":8,"gy":3,"weapon":"uzi"<span class="val">}</span>,
+    <span class="val">{</span>"type":"exit_trigger","gx":58,"gy":36<span class="val">}</span>
+  ]
+<span class="val">}</span>
+
+<span class="cm"># map.py adapté pour lire ce format</span>
+<span class="kw">def</span> load_level(path: str) -> Level:
+    data = json.load(open(path))
+    level = Level(space, data["tiles"], data["meta"])
+    for ent in data["entities"]:
+        level.spawn_entity(ent)
+    return level</div>
+  </div>
+
+  <div class="card">
+    <div class="lbl lc">05 — prompt complet à copier</div>
+    <div class="mono" id="full"><span class="cm">## CONTEXTE</span>
+Tu es expert Python/Pygame. Ajoute un éditeur de
+niveau complet au jeu Neon Miami (v2 avec inertie,
+caméra rapprochée 480×270, tiles 16px).
+Crée un fichier <span class="kw">editor.py</span> autonome et adapte
+<span class="kw">map.py</span> pour charger les niveaux depuis JSON.
+
+<span class="cm">## FICHIERS À CRÉER / MODIFIER</span>
+<span class="val">editor.py</span>     éditeur complet (nouveau)
+<span class="val">map.py</span>        adapter load_level(json_path)
+<span class="val">main.py</span>       ajouter arg --level chemin.json
+<span class="val">levels/</span>       dossier de sauvegarde des niveaux
+
+<span class="cm">## TILE TYPES</span>
+0 = floor (sol vide)
+1 = wall_thin   (mur 16px fin, HP=2, destructible)
+2 = wall_solid  (mur porteur 32px, HP=4)
+3 = floor_parquet (sol avec texture parquet)
+
+<span class="cm">## ENTITÉS (couche séparée)</span>
+P = player_spawn  (unique, requis)
+E = enemy         (weapon, patrol, vision)
+W = weapon_pickup (pistol/shotgun/uzi/katana)
+X = exit_trigger  (déclenche fin de niveau)
+
+<span class="cm">## INTERFACE ÉDITEUR (editor.py)</span>
+Fenêtre 960×540. Deux panneaux :
+- Canvas gauche (860px) : grille de tiles scrollable
+- Palette droite (100px) : sélection tile/outil
+
+Navigation canvas :
+  Molette → zoom ×0.5 à ×4
+  Clic molette + drag → pan
+  Clic gauche → pose tile actif
+  Clic droit  → efface (pose floor)
+  Shift+clic  → pipette (copie tile sous curseur)
+
+Outils clavier :
+  [1..7]   sélectionne tile ou entité active
+  [B]      brush   (peinture au clic maintenu)
+  [F]      fill    (flood fill récursif, 4-connexe)
+  [E]      eraser  (pose tile 0)
+  [R]      rectangle (drag → remplit rect)
+  [L]      ligne (algorithme Bresenham)
+  [Ctrl+Z] undo   (pile 50 états, deepcopy de tiles[])
+  [Ctrl+Y] redo
+  [Ctrl+S] save → levels/current.json
+  [Ctrl+O] ouvre un .json (listdir + sélection)
+  [N]      nouveau niveau : demande W H en tiles
+  [F5]     test in-game : subprocess.run main.py
+  [Tab]    aperçu rendu final (comme le jeu vrai)
+  [G]      toggle grille visible / cachée
+  [Del]    supprime entité sélectionnée
+
+Placement d'entité (E ou W actif) :
+  → affiche popup pygame (surface 280×160)
+  → champs : weapon, patrol (static/loop/rand),
+    vision (normal/wide/none)
+  → [OK] stocke dict dans entities[], [Cancel] annule
+  Les entités sont dessinées comme icônes colorées
+  semi-transparentes par-dessus les tiles.
+  Clic sur entité existante → la sélectionne (Del).
+
+Status bar (bas d'écran, 30px) :
+  "tile(12,5)=wall_thin | tool=brush | zoom=2x"
+
+<span class="cm">## FORMAT JSON DE SAUVEGARDE</span>
+{
+  "meta": {
+    "name": string, "width": int, "height": int,
+    "tile_size": 16, "version": 2
+  },
+  "tiles": [[int,...], ...],   # row-major 2D list
+  "entities": [
+    {"type":"player_spawn","gx":int,"gy":int},
+    {"type":"enemy","gx":int,"gy":int,
+      "weapon":str,"patrol":str,"vision":str},
+    {"type":"weapon_pickup","gx":int,"gy":int,
+      "weapon":str},
+    {"type":"exit_trigger","gx":int,"gy":int}
+  ]
+}
+
+<span class="cm">## ADAPTATION MAP.PY</span>
+Ajoute load_level(json_path, space) → Level.
+Level.__init__ accepte tiles 2D list + entities list.
+Garde la compatibilité avec la map hardcodée v2
+(si aucun argument passé).
+
+<span class="cm">## ADAPTATION MAIN.PY</span>
+import argparse
+parser.add_argument("--level", default=None)
+Si --level fourni → load_level(path)
+Sinon → niveau par défaut hardcodé.
+
+Exemple de lancement :
+  python editor.py            # ouvre l'éditeur
+  python main.py              # niveau par défaut
+  python main.py --level levels/mon_niveau.json
+
+<span class="cm">## CONTRAINTES</span>
+- Pas de dépendances hors pygame + pymunk + stdlib
+- Undo via deepcopy(tiles) avant chaque modification
+- Flood fill iteratif (pile Python, pas récursif)
+  pour éviter RecursionError sur grandes maps
+- editor.py doit tourner indépendamment du jeu
+- Sauvegarde auto (Ctrl+S) avant F5
+- Génère requirements.txt et README bref avec
+  les raccourcis claviers documentés
+
+Génère le code complet fichier par fichier.</div>
+    <button class="copy-btn" id="cb" onclick="cp()">
+      <i class="ti ti-copy" aria-hidden="true"></i>
+      Copier le prompt complet
+    </button>
+  </div>
+</div>
+
+<script>
+function cp(){
+  const t=document.getElementById('full').innerText;
+  navigator.clipboard.writeText(t).then(()=>{
+    const b=document.getElementById('cb');
+    b.classList.add('ok');
+    b.innerHTML='<i class="ti ti-check" aria-hidden="true"></i> Copié !';
+    setTimeout(()=>{b.classList.remove('ok');b.innerHTML='<i class="ti ti-copy" aria-hidden="true"></i> Copier le prompt complet';},2200);
+  });
+}
+</script>

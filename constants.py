@@ -60,6 +60,7 @@ GS_PLAYING  = 1
 GS_SCORE    = 2
 GS_GAMEOVER = 3
 GS_SETTINGS = 4
+GS_EDITOR   = 5
 
 # ── Pymunk collision categories ───────────────────────────────────────────────
 CAT_WALL    = 1 << 0

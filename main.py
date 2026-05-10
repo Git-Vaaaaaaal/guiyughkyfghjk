@@ -14,7 +14,8 @@ import pygame
 
 import constants
 from constants import *
-from map      import Map, camera_for, LEVEL_DATA
+from map      import Map, camera_for, LEVEL_DATA, load_level
+from editor   import Editor
 from physics  import PhysicsWorld
 from player   import Player, FloorItem, PICKUP_DIST
 from enemy    import Enemy, NOISE_RANGE
@@ -34,7 +35,8 @@ def _adiff(a: float, b: float) -> float:
 
 class Game:
 
-    def __init__(self):
+    def __init__(self, custom_level: str | None = None):
+        self._custom_level_path = custom_level
         pygame.init()
         pygame.display.set_caption("NEON HOMICIDE")
 
@@ -57,9 +59,10 @@ class Game:
         self._set_rebind    = False
         self._set_from_game = False
 
-        self.state  = GS_TITLE
-        self.level  = 0
-        self._scr_t = 0.0
+        self.state     = GS_TITLE
+        self.level     = 0
+        self._scr_t    = 0.0
+        self._title_btn = 0   # 0 = Jouer, 1 = Éditeur
 
         self.phys    = PhysicsWorld()
         self.flash   = ScreenFlash()
@@ -68,6 +71,8 @@ class Game:
         self.player:  Player       | None = None
         self.enemies: list[Enemy]         = []
         self.items:   list[FloorItem]     = []
+
+        self._editor: Editor | None = None
 
         self.level_start  = 0.0
         self.total_kills  = 0
@@ -91,7 +96,7 @@ class Game:
                 self._handle(ev)
 
             if   self.state == GS_TITLE:
-                render_title(self.screen, self._scr_t)
+                render_title(self.screen, self._scr_t, self._title_btn)
             elif self.state == GS_PLAYING:
                 self._update(dt)
                 self._render()
@@ -105,6 +110,8 @@ class Game:
                 render_settings(self.screen, self.cfg,
                                 self._set_cursor, self._set_rebind,
                                 self._set_from_game)
+            elif self.state == GS_EDITOR and self._editor:
+                self._editor.draw(self.screen)
 
             pygame.display.flip()
 
@@ -115,13 +122,39 @@ class Game:
         elif self.state == GS_SCORE:    self._ev_score(ev)
         elif self.state == GS_GAMEOVER: self._ev_over(ev)
         elif self.state == GS_SETTINGS: self._ev_settings(ev)
+        elif self.state == GS_EDITOR:   self._ev_editor(ev)
 
     def _ev_title(self, ev):
         if ev.type != pygame.KEYDOWN: return
+        if ev.key in (pygame.K_UP, pygame.K_DOWN):
+            self._title_btn = 1 - self._title_btn
+            return
+        if ev.key == pygame.K_e and self._title_btn == 1:
+            self._launch_editor(); return
         if ev.key == pygame.K_RETURN:
-            self._load(0); self._goto(GS_PLAYING)
+            if self._title_btn == 1:
+                self._launch_editor()
+            else:
+                self._load(0); self._goto(GS_PLAYING)
         elif ev.key == pygame.K_s:
             self._set_from_game = False; self._goto(GS_SETTINGS)
+
+    def _launch_editor(self):
+        self._editor = Editor(embedded=True)
+        self._goto(GS_EDITOR)
+
+    def _ev_editor(self, ev):
+        if self._editor is None: return
+        result = self._editor.handle_event(ev)
+        if result == 'quit':
+            self._editor = None
+            self._goto(GS_TITLE)
+        elif result and result.startswith('test:'):
+            path = result[5:]
+            self._custom_level_path = path
+            self._load(0)
+            self._editor = None
+            self._goto(GS_PLAYING)
 
     def _ev_play(self, ev):
         if ev.type == pygame.MOUSEBUTTONDOWN:
@@ -192,7 +225,10 @@ class Game:
     # ── Level loading ─────────────────────────────────────────────────────────
     def _load(self, idx: int):
         self.phys.clear()
-        self.map = Map(LEVEL_DATA[idx])
+        if self._custom_level_path and idx == 0:
+            self.map = load_level(self._custom_level_path)
+        else:
+            self.map = Map(LEVEL_DATA[idx])
         self.phys.init_blood(self.map.width, self.map.height)
         self.phys.load_walls(self.map)          # pass map object, not segments
 
@@ -473,4 +509,8 @@ class Game:
 
 # ── Entry ─────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    Game().run()
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--level", default=None, help="Path to a JSON level file")
+    args = ap.parse_args()
+    Game(custom_level=args.level).run()

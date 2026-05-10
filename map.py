@@ -280,3 +280,91 @@ def camera_for(px: float, py: float,
     cx = max(0.0, min(cx, float(max(0, map_w - view_w))))
     cy = max(0.0, min(cy, float(max(0, map_h - view_h))))
     return cx, cy
+
+
+# ── JSON level loader ──────────────────────────────────────────────────────────
+_TILE_TO_CHAR = {
+    0: '.',   # floor
+    1: '#',   # wall_thin
+    2: '=',   # wall_solid
+    3: '.',   # floor_parquet (same physics, different visual)
+}
+_WEAPON_NAME_TO_ID = {
+    "pistol": 1, "shotgun": 2, "bat": 3, "katana": 4,
+}
+_ENEMY_WEAPON_TO_ID = {
+    "pistol": 1, "shotgun": 2, "bat": 3, "katana": 4,
+}
+
+
+def load_level(json_path: str) -> Map:
+    """Load a level from a JSON file saved by the level editor."""
+    import json as _json
+    with open(json_path) as f:
+        data = _json.load(f)
+
+    meta      = data["meta"]
+    tile_rows = data["tiles"]   # list of list of int
+    entities  = data.get("entities", [])
+
+    T         = constants.TILE
+    map_h     = len(tile_rows)
+    map_w     = max((len(r) for r in tile_rows), default=0)
+
+    # Build grid strings from tile IDs
+    grid: list[str] = []
+    for row in tile_rows:
+        chars = [_TILE_TO_CHAR.get(tid, '.') for tid in row]
+        # Pad short rows
+        while len(chars) < map_w:
+            chars.append('.')
+        grid.append(''.join(chars))
+
+    # Resolve entities into enemy_starts / item_spawns / player_start
+    enemy_starts: list[dict] = []
+    item_spawns:  list[dict] = []
+    player_start: tuple      = (T * 1.5, T * 1.5)
+
+    for ent in entities:
+        gx, gy = ent["gx"], ent["gy"]
+        wx = gx * T + T // 2
+        wy = gy * T + T // 2
+        etype = ent["type"]
+
+        if etype == "player_spawn":
+            player_start = (float(wx), float(wy))
+
+        elif etype == "enemy":
+            wname  = ent.get("weapon", "pistol")
+            wid    = _ENEMY_WEAPON_TO_ID.get(wname, 1)
+            patrol = ent.get("patrol", "static")
+            if patrol == "static":
+                pts = [(wx, wy)]
+            else:
+                # Simple two-point patrol around spawn
+                pts = [(max(T, wx - 4*T), wy), (wx + 4*T, wy)]
+            enemy_starts.append({
+                "x": float(wx), "y": float(wy),
+                "weapon": wid, "patrol": pts,
+            })
+
+        elif etype == "weapon_pickup":
+            wname = ent.get("weapon", "pistol")
+            wid   = _WEAPON_NAME_TO_ID.get(wname, 1)
+            item_spawns.append({
+                "x": float(wx), "y": float(wy), "weapon": wid,
+            })
+
+    # Wrap into a dict that Map.__init__ understands
+    level_data = {
+        "name":    meta.get("name", "custom"),
+        "grid":    grid,
+        "patrols": {},
+    }
+
+    m = Map(level_data)
+    # Override parsed values with entity-layer data
+    m.player_start = player_start
+    m.enemy_starts = enemy_starts
+    m.item_spawns  = item_spawns
+    return m

@@ -113,34 +113,56 @@ _ASCII_LOGO = [
 ]
 
 
-def render_title(surface: pygame.Surface, elapsed: float):
+def render_title(surface: pygame.Surface, elapsed: float, btn_idx: int = 0):
     w, h = surface.get_size()
     surface.fill(COL_BG)
 
-    # Animated scanline colour shift
-    t = elapsed
+    t     = elapsed
     shift = int((math.sin(t * 1.3) + 1) * 0.5 * 80)
     logo_col = (0, 200 + shift, 180)
 
     # ASCII logo
     for i, line in enumerate(_ASCII_LOGO):
-        lx = i * 0.15       # slight stagger phase
-        alpha_mod = int((math.sin(t * 2 + lx) + 1) * 0.5 * 40) + 180
+        lx  = i * 0.15
         col = (logo_col[0], min(255, logo_col[1]),
                min(255, logo_col[2] + shift // 2))
         surf = _txt(line, 14, col)
         y    = h // 4 + i * 20
         surface.blit(surf, (w // 2 - surf.get_width() // 2, y))
 
-    # Blinking "PRESS ENTER" prompt
-    if int(t * 2) % 2 == 0:
-        p = _txt("[ PRESS ENTER TO EXECUTE ]", 16, COL_AMBER)
-        surface.blit(p, (w // 2 - p.get_width() // 2, h * 3 // 4))
+    # Two menu buttons
+    btn_y   = h * 3 // 4 - 10
+    btn_gap = 54
+    buttons = [
+        ("[ ENTER ]  JOUER",   COL_CYAN),
+        ("[ E ]      ÉDITEUR", COL_AMBER),
+    ]
+    for i, (label, col_active) in enumerate(buttons):
+        selected = (i == btn_idx)
+        col  = col_active if selected else (70, 70, 100)
+        size = 18 if selected else 14
+        s    = _txt(label, size, col)
+        bx   = w // 2 - s.get_width() // 2
+        by   = btn_y + i * btn_gap
+        if selected:
+            # Highlight box
+            pad = 8
+            box = pygame.Surface((s.get_width() + pad*2, s.get_height() + pad),
+                                  pygame.SRCALPHA)
+            box.fill((0, 0, 0, 0))
+            pygame.draw.rect(box, (*col_active, 40),
+                             (0, 0, box.get_width(), box.get_height()),
+                             border_radius=4)
+            pygame.draw.rect(box, (*col_active, 180),
+                             (0, 0, box.get_width(), box.get_height()),
+                             2, border_radius=4)
+            surface.blit(box, (bx - pad, by - pad // 2))
+        surface.blit(s, (bx, by))
 
-    # Subtitle
-    sub = _txt("wasd/zqsd · mouse aim · lmb fire · rmb melee · f throw · e pickup",
-               11, (80, 80, 110), bold=False)
-    surface.blit(sub, (w // 2 - sub.get_width() // 2, h * 3 // 4 + 36))
+    # Hint
+    hint = _txt("↑ ↓  naviguer   ENTER / E  confirmer",
+                10, (60, 60, 90), bold=False)
+    surface.blit(hint, (w // 2 - hint.get_width() // 2, btn_y + 2 * btn_gap + 10))
 
     # Fake terminal flicker
     if random.random() < 0.015:
